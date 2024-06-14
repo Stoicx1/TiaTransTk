@@ -1,0 +1,15 @@
+
+import settings
+
+headings = ('Category', 'ViewPath', 'Internal ID', 'Substitutions', 'en-US*', 'en-US', 'ro-RO', 'de-DE', 'ref="0"', 'ref="1"', 'ref="2"', 'ref="3"', 'ref="4"', 'ref="5"', 'ref="6"', 'ref="7"', 'ref="8"', 'ref="9"', 'ref="10"', 'ref="11"', 'ref="12"', 'ref="13"', 'ref="14"', 'ref="15"')
+data = ['<HMI screen>', 'CMAX_FA_PLC2\\==FA105=C060+HB2-KF1\\Screens\\100  Type\\100_Type_L\\Textfeld_4\\Text', 'VonU3OCO1ovtnYMk0UeqTjOsFVT9npoPB4r+iAG1p5oBk8sAUOYHpvsIozV4YFVLxSmH/PcEP0nzdPUydqWRmEEdAPM87gkIQ0OBjKqR+leGCzui39eYqVgLJlTYaxMO78/xNpmixa9kUrPleZh9nMwYtoDFAErTX0grdggcbh1bgsrh1g8rglLgKyfXCZxR', 'nan', 'Variant selection AAC', 'Variant selection AAC', 113, 's', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan']
+
+dataDict =  dict(zip(headings, data))
+#print(dataDict)
+
+dataDict['ro-RO'] = 'modification'
+
+#print()
+#print(dataDict)
+
+print(settings.C_LANG['EN']['langTia'])

@@ -1,0 +1,148 @@
+import pandas as pd
+import requests
+import os
+from tabulate import tabulate
+import time
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+from tkinter import *
+import Translation
+import settings
+
+root = tk.Tk()
+root.title('TiaTextManager')
+root.geometry('1500x500')
+root.pack_propagate(True) # tells the root to not let the widgets inside it determine its size.
+#root.resizable(0, 0) # makes the root window fixed in size.
+
+frame_excel = tk.LabelFrame(root, text='Excel data')
+frame_excel.place(relheight=0.75, relwidth=1)
+
+tv1 = ttk.Treeview(frame_excel)
+tv1.place(relheight=1, relwidth=1)
+
+treescrolly = tk.Scrollbar(frame_excel, orient="vertical", command=tv1.yview) # command means update the yaxis view of the widget
+treescrollx = tk.Scrollbar(frame_excel, orient="horizontal", command=tv1.xview) # command means update the xaxis view of the widget
+tv1.configure(xscrollcommand=treescrollx.set, yscrollcommand=treescrolly.set) # assign the scrollbars to the Treeview Widget
+treescrollx.pack(side="bottom", fill="x") # make the scrollbar fill the x axis of the Treeview widget
+treescrolly.pack(side="right", fill="y") # make the scrollbar fill the y axis of the Treeview widget
+
+def File_dialog():
+    """This Function will open the file explorer and assign the chosen file path to label_file"""
+    '''
+    filename = filedialog.askopenfilename(initialdir="/",
+                                          title="Select A File",
+                                          filetype=(("xlsx files", "*.xlsx"),("All Files", "*.*")))
+    '''
+    filename = 'C:/Users/Pavol Hvolka/Documents/python/TranslatorTk/test.xlsx'
+    frame_excel["text"] = filename
+    return None
+
+def Load_excel_data():
+    File_dialog()
+    """If the file selected is valid this will load the file into the Treeview"""
+    file_path = frame_excel['text']
+    try:
+        excel_filename = r"{}".format(file_path)
+        if excel_filename[-4:] == ".csv":
+            df = pd.read_csv(excel_filename)
+        else:
+            df = pd.read_excel(excel_filename)
+
+    except ValueError:
+        tk.messagebox.showerror("Information", "The file you have chosen is invalid")
+        return None
+    except FileNotFoundError:
+        tk.messagebox.showerror("Information", f"No such file as {file_path}")
+        return None
+
+    clear_data()
+    frame_excel["text"] = file_path
+    tv1["column"] = list(df.columns)
+    tv1["show"] = "headings"
+    for column in tv1["columns"]:
+        tv1.heading(column, text=column) # let the column heading = column name
+
+    df_rows = df.to_numpy().tolist() # turns the dataframe into a list of lists
+    for row in df_rows:
+        tv1.insert("", "end", values=row) # inserts each list into the treeview. For parameters see https://docs.python.org/3/library/tkinter.ttk.html#tkinter.ttk.Treeview.insert
+    
+    # Define the column headings and set the sort command
+    for col in tv1['columns']:
+        tv1.heading(col, text=col, command=lambda c=col: sort_treeview(tv1, c, False))
+
+    # Bind a double-click event to the Treeview widget
+    tv1.bind('<Double-1>', DoubleClick)
+    tv1.bind('<<TreeviewSelect>>', OnChange)
+    return None
+
+def clear_data():
+    tv1.delete(*tv1.get_children())
+    frame_excel["text"] = 'Closed'
+    return None
+
+def sort_treeview(tree, col, descending):
+    # Get all the data from the specified column
+    data = [(tree.set(item, col), item) for item in tree.get_children('')]
+    # Sort the data based on the column value
+    data.sort(reverse=descending)
+    # Rearrange items in sorted order
+    for index, (val, item) in enumerate(data):
+        tree.move(item, '', index)
+    # Update the heading to allow toggling sort order
+    tree.heading(col, command=lambda: sort_treeview(tree, col, not descending))
+
+def DoubleClick(self, event):
+    pass
+
+def OnChange(event):
+    sel_row = tv1.focus()
+    sel_row_content = tv1.item(sel_row)
+    sel_row_values = tv1.item(sel_row)['values']
+    data_headings = tv1['column']
+    #
+    data_dict = dict(zip(data_headings, sel_row_values))
+    data_dict[settings.C_LANG['RO']['langTia']] = Translation.GetTranslation(data_dict[settings.C_LANG['US']['langTia']], settings.C_LANG['RO']['lang'])
+    data_dict[settings.C_LANG['DE']['langTia']] = Translation.GetTranslation(data_dict[settings.C_LANG['US']['langTia']], settings.C_LANG['DE']['lang'])
+    tv1.item(tv1.selection(), values=tuple(data_dict.values()))
+
+def donothing():
+    print('donothing')
+
+######################################################################
+###                     MENU CONFIGURATION                         ###
+######################################################################
+menubar = Menu(root)
+# File menu cascade config
+filemenu = Menu(menubar, tearoff=0)
+filemenu.add_command(label="New", command=donothing)
+filemenu.add_command(label="Open", command=Load_excel_data)
+filemenu.add_command(label="Save", command=donothing)
+filemenu.add_command(label="Save as...", command=donothing)
+filemenu.add_command(label="Close", command=clear_data)
+filemenu.add_separator()
+filemenu.add_command(label="Exit", command=root.quit)
+menubar.add_cascade(label="File", menu=filemenu)
+# Edit menu cascade config
+editmenu = Menu(menubar, tearoff=0)
+editmenu.add_command(label="Refresh", command=donothing)
+editmenu.add_separator()
+editmenu.add_command(label="Cut", command=donothing)
+editmenu.add_command(label="Copy", command=donothing)
+editmenu.add_command(label="Paste", command=donothing)
+editmenu.add_command(label="Delete", command=donothing)
+editmenu.add_command(label="Select All", command=donothing)
+menubar.add_cascade(label="Edit", menu=editmenu)
+# Help menu cascade config
+helpmenu = Menu(menubar, tearoff=0)
+helpmenu.add_command(label="Help Index", command=donothing)
+helpmenu.add_command(label="About...", command=donothing)
+menubar.add_cascade(label="Help", menu=helpmenu)
+
+root.config(menu=menubar)
+
+######################################################################
+###                      TKINTER RUN LOOP                          ###
+######################################################################
+root.mainloop()
+
